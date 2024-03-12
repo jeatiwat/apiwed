@@ -57,16 +57,16 @@ router.post("/", (req, res) => {
 
             const pid2 = results2[0].pid;
 
-            const sql1WithRandomPid = "SELECT picture.*,user_picture.uid FROM picture JOIN user_picture ON picture.pid = user_picture.pid WHERE picture.pid = ?;";
-            const sql2WithRandomPid = "SELECT picture.*,user_picture.uid FROM picture JOIN user_picture ON picture.pid = user_picture.pid WHERE picture.pid = ?;";
+            const sql1 = "SELECT picture.* FROM picture  WHERE picture.pid = ?;";
+            const sql2 = "SELECT picture.* FROM picture  WHERE picture.pid = ?;";
 
-            conn.query(sql1WithRandomPid, [pid1], (error, user1) => {
+            conn.query(sql1, [pid1], (error, user1) => {
                 if (error) throw error;
 
-                conn.query(sql2WithRandomPid, [pid2], (error, user2) => {
+                conn.query(sql2, [pid2], (error, user2) => {
                     if (error) throw error;
 
-                    res.json({ user1: user1[0], user2: user2[0] });
+                    res.json({ user1: user1, user2: user2 });
                 });
             });
         });
