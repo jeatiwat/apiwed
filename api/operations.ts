@@ -90,15 +90,6 @@ router.post("/", (req, res) => {
 });
 
 
-  // router.get("/:username/:password", (req, res) => {
-  //   conn.query('select * from user', (err, result, fields)=>{
-  //     res.json(result);
-  //   });
-
-    
-  // });
-
-
 
   router.get("/:username/:password", (req, res) => {
     const username = req.params.username;
@@ -166,60 +157,6 @@ router.post("/", (req, res) => {
         res.status(201).json({ affected_row: result.affectedRows });
       });
   });
-
-
-//   router.put("/:vid1/:vid2", async (req, res) => {
-//     let id1 = +req.params.vid1;
-//     let id2 = +req.params.vid2;
-//     let operations: votesPostRequest = req.body;
-//     let dataOriginal1: votesPostRequest | undefined;
-//     let dataOriginal2: votesPostRequest | undefined;
-
-//     let sql1 = mysql.format("select * from votes where vid = ?", [id1]);
-//     let sql2 = mysql.format("select * from votes where vid = ?", [id2]);
-
-//     let result1 = await queryAsync(sql1);
-//     let result2 = await queryAsync(sql2);
-
-//     const rawData1 = JSON.parse(JSON.stringify(result1));
-//     const rawData2 = JSON.parse(JSON.stringify(result2));
-
-//     console.log(rawData1);
-//     console.log(rawData2);
-
-//     dataOriginal1 = rawData1[0] as votesPostRequest;
-//     dataOriginal2 = rawData2[0] as votesPostRequest;
-
-//     console.log(dataOriginal1);
-//     console.log(dataOriginal2);
-
-//     let updatedData1 = { ...dataOriginal1, ...operations };
-//     let updatedData2 = { ...dataOriginal2, ...operations };
-
-//     console.log(operations);
-//     console.log(updatedData1);
-//     console.log(updatedData2);
-
-//     let sqlUpdate1 = "UPDATE `votes` SET `vote`=? WHERE `vid`=?";
-//     let sqlUpdate2 = "UPDATE `votes` SET `vote`=? WHERE `vid`=?";
-
-//     sqlUpdate1 = mysql.format(sqlUpdate1, [updatedData1.vid1.vote, id1]);
-//     sqlUpdate2 = mysql.format(sqlUpdate2, [updatedData2.vid2.vote, id2]);
-
-//     conn.query(sqlUpdate1, (err, result1) => {
-//         if (err) throw err;
-
-//         conn.query(sqlUpdate2, (err, result2) => {
-//             if (err) throw err;
-
-//             res.status(201).json({
-//                 affected_rows_vid1: result1.affectedRows,
-//                 affected_rows_vid2: result2.affectedRows
-//             });
-//         });
-//     });
-// });
-
 
 router.put("/:pid1/:pid2", async (req, res) => {
   let id1 = +req.params.pid1;
@@ -483,12 +420,6 @@ router.put("/:pid1/:pid2", async (req, res) => {
   });
 });
 
-
-//ควย
-
-
-
-
   // router.post("/", (req, res) => {
   //   let body = req.body; 
   //   // res.send("Get in trip.ts body: " + body);
@@ -497,3 +428,5 @@ router.put("/:pid1/:pid2", async (req, res) => {
   //   // res.send("Get in trip.ts body : " + JSON.stringify(body));
   //     .json({ text : "Get in trip.ts body: "+ JSON.stringify(body)});
   // });
+
+  
