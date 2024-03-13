@@ -1,10 +1,5 @@
 import express from "express";
-
 import { conn, queryAsync } from "../dbconnect";
-
-import { databasePostRequest } from "../model/data_post";
-
-import mysql from "mysql";
 
 export const router = express.Router();
 
