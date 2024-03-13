@@ -429,4 +429,17 @@ router.put("/:pid1/:pid2", async (req, res) => {
   //     .json({ text : "Get in trip.ts body: "+ JSON.stringify(body)});
   // });
 
-  
+
+  router.get("/:pid" , (req,res) => {
+    let id = +req.params.pid;
+    const sql = "";
+
+    conn.query(sql,[id],(err,result)=>{
+      if(err){ //check error
+          res.status(400).json(err);
+      }else{
+          res.json(result);
+      }
+  })
+  });
+
