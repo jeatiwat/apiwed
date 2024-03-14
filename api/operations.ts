@@ -164,8 +164,11 @@ router.put("/:pid1/:pid2", async (req, res) => {
 
   let { vid1, vid2 } = req.body; // รับค่า vid1 และ vid2 จาก req.body
 
-  let currentDate = new Date(); // สร้างวันที่และเวลาปัจจุบัน
-  let formattedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+  let currentDate = new Date();
+  // ปรับเวลาโซนไทย (GMT+7)
+  let thaiOffset = 7 * 60; // 7 ชั่วโมง * 60 นาที
+  let thaiTime = new Date(currentDate.getTime() + (thaiOffset * 60000)); // สร้างวันที่และเวลาปัจจุบัน
+
   // ตรวจสอบว่ามี vote ในวันที่เดียวกันหรือไม่
   let checkVoteSql1 = `
     SELECT COUNT(*) AS vote_count
@@ -177,14 +180,14 @@ router.put("/:pid1/:pid2", async (req, res) => {
     FROM votes
     WHERE DATE(date) = DATE(?) AND pid = ?`;
 
-  conn.query(checkVoteSql1, [formattedDate, id1], (err, voteCountResult1) => {
+  conn.query(checkVoteSql1, [thaiTime, id1], (err, voteCountResult1) => {
     if (err) {
       console.error("Error:", err);
       res.status(500).json({ error: "Internal Server Error" });
       return;
     }
 
-    conn.query(checkVoteSql2, [formattedDate, id2], (err, voteCountResult2) => {
+    conn.query(checkVoteSql2, [thaiTime, id2], (err, voteCountResult2) => {
       if (err) {
         console.error("Error:", err);
         res.status(500).json({ error: "Internal Server Error" });
@@ -198,7 +201,7 @@ router.put("/:pid1/:pid2", async (req, res) => {
           SET vote = ? 
           WHERE pid = ? AND DATE(date) = DATE(?)`;
 
-        conn.query(updateSql1, [vid1.vote, id1, formattedDate], (err, result1) => {
+        conn.query(updateSql1, [vid1.vote, id1, thaiTime], (err, result1) => {
           if (err) {
             console.error("Error:", err);
             res.status(500).json({ error: "Internal Server Error" });
@@ -213,7 +216,7 @@ router.put("/:pid1/:pid2", async (req, res) => {
               SET vote = ? 
               WHERE pid = ? AND DATE(date) = DATE(?)`;
 
-            conn.query(updateSql2, [vid2.vote, id2, formattedDate], (err, result2) => {
+            conn.query(updateSql2, [vid2.vote, id2, thaiTime], (err, result2) => {
               if (err) {
                 console.error("Error:", err);
                 res.status(500).json({ error: "Internal Server Error" });
@@ -257,7 +260,7 @@ router.put("/:pid1/:pid2", async (req, res) => {
             });
           } else {
             // ถ้ายังไม่มี vote ในวันที่เดียวกันสำหรับ pid2
-            let insertSql2 = mysql.format("INSERT INTO `votes` (`vote`, `date`, `pid`) VALUES (?, ?, ?)", [vid2.vote, formattedDate, id2]);
+            let insertSql2 = mysql.format("INSERT INTO `votes` (`vote`, `date`, `pid`) VALUES (?, ?, ?)", [vid2.vote, thaiTime, id2]);
 
             conn.query(insertSql2, (err, result2) => {
               if (err) {
@@ -306,7 +309,7 @@ router.put("/:pid1/:pid2", async (req, res) => {
         });
       } else {
         // ถ้ายังไม่มี vote ในวันที่เดียวกันสำหรับ pid1
-        let insertSql1 = mysql.format("INSERT INTO `votes` (`vote`, `date`, `pid`) VALUES (?, ?, ?)", [vid1.vote, formattedDate, id1]);
+        let insertSql1 = mysql.format("INSERT INTO `votes` (`vote`, `date`, `pid`) VALUES (?, ?, ?)", [vid1.vote, thaiTime, id1]);
 
         conn.query(insertSql1, (err, result1) => {
           if (err) {
@@ -323,7 +326,7 @@ router.put("/:pid1/:pid2", async (req, res) => {
               SET vote = ? 
               WHERE pid = ? AND DATE(date) = DATE(?)`;
 
-            conn.query(updateSql2, [vid2.vote, id2, formattedDate], (err, result2) => {
+            conn.query(updateSql2, [vid2.vote, id2, thaiTime], (err, result2) => {
               if (err) {
                 console.error("Error:", err);
                 res.status(500).json({ error: "Internal Server Error" });
@@ -368,7 +371,7 @@ router.put("/:pid1/:pid2", async (req, res) => {
             });
           } else {
             // ถ้ายังไม่มี vote ในวันที่เดียวกันสำหรับ pid2
-            let insertSql2 = mysql.format("INSERT INTO `votes` (`vote`, `date`, `pid`) VALUES (?, ?, ?)", [vid2.vote, formattedDate, id2]);
+            let insertSql2 = mysql.format("INSERT INTO `votes` (`vote`, `date`, `pid`) VALUES (?, ?, ?)", [vid2.vote, thaiTime, id2]);
 
             conn.query(insertSql2, (err, result2) => {
               if (err) {
