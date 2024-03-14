@@ -6,7 +6,11 @@ export const router = express.Router();
 
 router.get("/:pid" , (req,res) => {
     let id = +req.params.pid;
-    const sql = "SELECT * FROM votes WHERE pid = ? ORDER BY date DESC;";
+    const sql = `SELECT *, DATE_FORMAT(date, '%Y-%m-%d') AS date
+    FROM votes
+    WHERE pid = ?
+    ORDER BY date DESC
+    LIMIT 7;`;
 
     conn.query(sql, [id], (err,result)=>{
       if(err){ //check error
