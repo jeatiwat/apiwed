@@ -9,7 +9,7 @@ router.get("/:pid" , (req,res) => {
     const sql = `SELECT *, DATE_FORMAT(date, '%Y-%m-%d') AS date
     FROM votes
     WHERE pid = ?
-    ORDER BY date ASC
+    ORDER BY date DESC
     LIMIT 7;`;
 
     conn.query(sql, [id], (err,result)=>{
