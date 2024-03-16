@@ -23,13 +23,37 @@ router.get("/:pid" , (req,res) => {
 
 router.get("/" , (req,res) =>{
 
-    const sql = `SELECT picture.*, user.uid, user.name 
-                        FROM picture
-                        JOIN user_picture ON user_picture.pid = picture.pid 
-                        JOIN user ON user_picture.uid = user.uid 
-                        WHERE 1 
-                        ORDER BY point DESC
-                        LIMIT 10;`
+    const sql = `SELECT
+    p.*,
+    up.uid,
+    u.name,
+    v.vote,
+    v.date,
+    @rank1 := ROW_NUMBER() OVER(ORDER BY p.point DESC) AS ranking1,
+    @rank2 := ROW_NUMBER() OVER(ORDER BY v.vote DESC) AS ranking2
+    FROM
+        picture p
+    JOIN
+        user_picture up ON up.pid = p.pid
+    JOIN
+        user u ON up.uid = u.uid
+    JOIN
+        votes v ON p.pid = v.pid
+    WHERE
+        (p.pid, v.date) IN (
+            SELECT
+                pid,
+                MAX(DATE_SUB(date, INTERVAL 1 DAY))
+            FROM
+                votes
+            GROUP BY
+                pid
+        )
+    ORDER BY
+        v.vote DESC,
+        p.point DESC
+    LIMIT
+        10;;`
 
     conn.query(sql, (err,result)=>{
         if(err){ //check error
