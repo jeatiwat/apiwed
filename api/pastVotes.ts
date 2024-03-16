@@ -50,8 +50,9 @@ router.get("/" , (req,res) =>{
                 pid
         )
     ORDER BY
-        v.vote DESC,
-        p.point DESC
+        p.point DESC,
+        v.vote DESC
+        
     LIMIT
         10;;`
 
