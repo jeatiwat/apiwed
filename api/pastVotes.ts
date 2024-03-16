@@ -31,29 +31,30 @@ router.get("/" , (req,res) =>{
     v.date,
     @rank1 := ROW_NUMBER() OVER(ORDER BY p.point DESC) AS ranking1,
     @rank2 := ROW_NUMBER() OVER(ORDER BY v.vote DESC) AS ranking2
-    FROM
-        picture p
-    JOIN
-        user_picture up ON up.pid = p.pid
-    JOIN
-        user u ON up.uid = u.uid
-    JOIN
-        votes v ON p.pid = v.pid
-    WHERE
-        (p.pid, v.date) IN (
-            SELECT
-                pid,
-                MAX(DATE_SUB(date, INTERVAL 1 DAY))
-            FROM
-                votes
-            GROUP BY
-                pid
-        )
-    ORDER BY
-        v.vote DESC,
-        p.point DESC
-    LIMIT
-        10;;`
+FROM
+    picture p
+JOIN
+    user_picture up ON up.pid = p.pid
+JOIN
+    user u ON up.uid = u.uid
+LEFT JOIN
+    votes v ON p.pid = v.pid
+LEFT JOIN (
+        SELECT
+            pid,
+            MAX(DATE_SUB(date, INTERVAL 1 DAY)) AS max_date
+        FROM
+            votes
+        GROUP BY
+            pid
+    ) max_votes ON p.pid = max_votes.pid AND v.date = max_votes.max_date
+WHERE
+    max_votes.pid IS NULL OR v.date IS NOT NULL
+ORDER BY
+    IFNULL(v.vote, 0) DESC,
+    IFNULL(p.point, 0) DESC
+LIMIT
+    10;;`
 
     conn.query(sql, (err,result)=>{
         if(err){ //check error
