@@ -251,7 +251,7 @@ router.post("/:uid", fileupload.diskLoader.single("file"), async (req, res) => {
     const currentTime = new Date();
     
     // gennarate file name
-    const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
+    const filename = "-" + Math.round(Math.random() * 10000) + ".png";
     // กำหนดชื่อ file
     const storageRef = ref(storage, "/image/" + filename);
     const metadata = {
@@ -307,6 +307,45 @@ router.post("/:uid", fileupload.diskLoader.single("file"), async (req, res) => {
   });
 });
 
+router.put("/:pid", fileupload.diskLoader.single("file"), async (req, res) => {
+  try {
+    const pid = req.params.pid; // Get pid from route parameters
+
+    // Check if req.file exists
+    if (!req.file) {
+      throw new Error("No file uploaded");
+    }
+
+    // Generate file name
+    const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
+    
+    // Set file name
+    const storageRef = ref(storage, "/image/" + filename);
+    const metadata = {
+      contentType: req.file.mimetype
+    };
+
+    // Upload
+    const snapshot = await uploadBytesResumable(storageRef, req.file.buffer, metadata);
+    const url = await getDownloadURL(snapshot.ref);
+
+    const sql1 = "UPDATE `picture` SET `picture_url` = ? WHERE `pid` = ?";
+    
+    // Update picture table
+    conn.query(sql1, [url, pid], (err, result) => {
+      if (err) {
+        console.error("Error updating data in 'picture' table:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
+      }
+
+      res.status(200).json({ success: true, message: "File uploaded successfully" });
+    });
+  } catch (error) {
+    console.error("Error uploading file to storage:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 
 router.get("/:id", (req, res) => {
