@@ -49,11 +49,21 @@ router.post("/", (req, res) => {
    
   router.delete("/:pid", (req, res) => {
     let id = +req.params.pid;
-    conn.query("DELETE user_picture, picture, votes FROM user_picture JOIN picture ON user_picture.pid = picture.pid JOIN votes ON user_picture.pid = votes.pid WHERE user_picture.pid = ?", [id], (err, result) => {
+    conn.query("DELETE FROM user_picture WHERE pid = ?", [id], (err, result) => {
         if (err) throw err;
-        res.status(200).json({ affected_row: result.affectedRows });
+        
+        conn.query("DELETE FROM picture WHERE pid = ?", [id], (err, result) => {
+            if (err) throw err;
+
+            conn.query("DELETE FROM votes WHERE pid = ?", [id], (err, result) => {
+                if (err) throw err;
+
+                res.status(200).json({ affected_rows: result.affectedRows });
+            });
+        });
     });
 });
+
 
 
 
