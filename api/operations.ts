@@ -11,6 +11,9 @@ export const router = express.Router();
 const bcrypt = require('bcryptjs');
 
 
+
+
+
 router.post("/", (req, res) => {
     let apply: databasePostRequest = req.body;
     let sql =
@@ -30,9 +33,23 @@ router.post("/", (req, res) => {
         .json({ affected_row: result.affectedRows, last_idx: result.insertId });
     });
   });
-  router.delete("/:id", (req, res) => {
-    let id = +req.params.id;
-    conn.query("delete from user where uid = ?", [id], (err, result) => {
+
+
+  
+  // router.delete("/:id", (req, res) => {
+  //   let id = +req.params.id;
+  //   conn.query("delete from user where uid = ?", [id], (err, result) => {
+  //      if (err) throw err;
+  //      res
+  //        .status(200)
+  //        .json({ affected_row: result.affectedRows });
+  //   });
+  // });
+
+   
+  router.delete("/:pid", (req, res) => {
+    let id = +req.params.pid;
+    conn.query("delete from user_picture JOIN picture ON user_picture.pid = picture.pid JOIN votes ON user_picture.pid = votes.pid where pid = ?", [id], (err, result) => {
        if (err) throw err;
        res
          .status(200)
