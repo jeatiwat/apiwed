@@ -4,6 +4,8 @@ import { router as trip } from "./api/trip";
 import { router as operations } from "./api/operations";
 import { router as  upload } from "./api/upload";
 import { router as  pastVotes } from "./api/pastVotes";
+import { router as  user } from "./api/user";
+
 import bodyParser from "body-parser";
 
 
@@ -29,6 +31,7 @@ app.use("/trip", trip);
 app.use("/operations", operations);
 app.use("/upload", upload);
 app.use("/pastVotes", pastVotes);
+app.use("/user", user);
 app.use("/uploads", express.static("uploads"));
 // app.use("/", (req, res) => {
 //   res.send("Hello World!!!");
