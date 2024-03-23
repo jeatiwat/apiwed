@@ -49,14 +49,24 @@ router.post("/", (req, res) => {
    
   router.delete("/:pid", (req, res) => {
     let id = +req.params.pid;
-    conn.query("DELETE FROM user_picture WHERE pid = ?", [id], (err, result) => {
-        if (err) throw err;
-        
-        conn.query("DELETE FROM picture WHERE pid = ?", [id], (err, result) => {
-            if (err) throw err;
 
-            conn.query("DELETE FROM votes WHERE pid = ?", [id], (err, result) => {
-                if (err) throw err;
+    conn.query("DELETE FROM user_picture WHERE pid = ?", [id], (err, result) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+
+        conn.query("DELETE FROM votes WHERE pid = ?", [id], (err, result) => {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+
+            conn.query("DELETE FROM picture WHERE pid = ?", [id], (err, result) => {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
 
                 res.status(200).json({ affected_rows: result.affectedRows });
             });
