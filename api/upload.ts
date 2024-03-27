@@ -10,7 +10,7 @@ router.get("/",(req,res)=>{
 
 
 import { initializeApp } from "firebase/app";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL,deleteObject } from "firebase/storage";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 import { getAnalytics } from "firebase/analytics";
 // key ก่อน
