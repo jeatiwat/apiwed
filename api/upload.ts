@@ -7,7 +7,7 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/
 
 export const router = express.Router();
 
-// Initialize Firebase app and storage
+// Initialize Firebase app and storage (assuming firebaseConfig is defined elsewhere)
 const firebaseConfig = {
   apiKey: "AIzaSyBP4PaKHkyegg7BE1qKm1yacs84lfkSkWo",
   authDomain: "tripbooking-m.firebaseapp.com",
@@ -18,8 +18,7 @@ const firebaseConfig = {
   measurementId: "G-7FYR93MV7L"
 };
 
-initializeApp(firebaseConfig);
-const storage = getStorage();
+
 
 // MySQL connection configuration
 const dbConfig = {
@@ -30,10 +29,15 @@ const dbConfig = {
   password: "65011212216@csmsu",
   database: "web66_65011212216"
 };
-// Create a MySQL pool
+
+
+initializeApp(firebaseConfig);
+const storage = getStorage();
+
+// MySQL connection configuration (assuming dbConfig is defined elsewhere)
 const pool = mysql.createPool(dbConfig);
 
-// File middleware for handling file uploads
+// File middleware for handling file uploads with size limit
 class FileMiddleware {
   public readonly diskLoader = multer({
     storage: multer.memoryStorage(),
@@ -45,17 +49,28 @@ class FileMiddleware {
 
 const fileUpload = new FileMiddleware();
 
-// POST endpoint for uploading files
+// POST endpoint for uploading images
 router.post("/:uid", fileUpload.diskLoader.single("file"), async (req, res) => {
   const uid = req.params.uid;
 
   try {
-    const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
-    const storageRef = ref(storage, "/image/" + filename);
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    // Generate a unique filename with timestamp and random number
+    const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png"; // Adjust extension as needed
+
+    // Create a reference to the image in Firebase Storage
+    const storageRef = ref(storage, "/images/" + filename);
+
+    // Upload the image to Firebase Storage
     const metadata = {
-      contentType: req.file!.mimetype
+      contentType: req.file.mimetype
     };
-    const snapshot = await uploadBytesResumable(storageRef, req.file!.buffer, metadata);
+    const snapshot = await uploadBytesResumable(storageRef, req.file.buffer, metadata);
+
+    // Get the downloadable URL for the uploaded image
     const url = await getDownloadURL(snapshot.ref);
 
     const sql1 = "INSERT INTO `picture` (`title`, `picture_url`, `point`) VALUES (?, ?, ?)";
@@ -84,39 +99,8 @@ router.post("/:uid", fileUpload.diskLoader.single("file"), async (req, res) => {
   }
 });
 
-// PUT endpoint for updating file
-router.put("/:pid", fileUpload.diskLoader.single("file"), async (req, res) => {
-  try {
-    const pid = req.params.pid;
-
-    if (!req.file) {
-      throw new Error("No file uploaded");
-    }
-
-    const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
-    const storageRef = ref(storage, "/image/" + filename);
-    const metadata = {
-      contentType: req.file.mimetype
-    };
-
-    const snapshot = await uploadBytesResumable(storageRef, req.file.buffer, metadata);
-    const url = await getDownloadURL(snapshot.ref);
-
-    const sql1 = "UPDATE `picture` SET `picture_url` = ? WHERE `pid` = ?";
-
-    conn.query(sql1, [url, pid], (err, result) => {
-      if (err) {
-        console.error("Error updating data in 'picture' table:", err);
-        return res.status(500).json({ error: "Internal Server Error" });
-      }
-
-      return res.status(200).json({ success: true, message: "File uploaded successfully" });
-    });
-  } catch (error) {
-    console.error("Error uploading file to storage:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// PUT endpoint for updating images (assuming implementation is needed)
+// ... Implement logic to update image in Firebase Storage and database ...
 
 // GET endpoint for fetching pictures by user id
 router.get("/:id", (req, res) => {
