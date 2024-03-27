@@ -5,26 +5,29 @@ import multer from "multer";
 export const router = express.Router();
 
 router.get("/",(req,res)=>{
-    res.send("Upload");
+    res.send("upload");
 });
 
 
 import { initializeApp } from "firebase/app";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL,deleteObject } from "firebase/storage";
 
+import { getAnalytics } from "firebase/analytics";
 // key ก่อน
 // apiKey: "AIzaSyC-NHZoh1twNsTs0PHjkCIydxcHISrCqEE"
 
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDB0wentj8Igqan_Bpe7g-MOEvCSSiSnt0",
-    authDomain: "api-test-94f3b.firebaseapp.com",
-    projectId: "api-test-94f3b",
-    storageBucket: "api-test-94f3b.appspot.com",
-    messagingSenderId: "291742907529",
-    appId: "1:291742907529:web:ea2f1dc03bcbde0462da58",
-    measurementId: "G-P99T31SED3"
+  apiKey: "AIzaSyBWibpAwgLsYEgYDHjVuSognrQW2VCNbVI",
+  authDomain: "projectwed-cc3fc.firebaseapp.com",
+  projectId: "projectwed-cc3fc",
+  storageBucket: "projectwed-cc3fc.appspot.com",
+  messagingSenderId: "542332922077",
+  appId: "1:542332922077:web:79b741f3c9265f8fde5334",
+  measurementId: "G-HHF17SY421"
 };
+
+// Initialize Firebase
 
 
 initializeApp(firebaseConfig);
