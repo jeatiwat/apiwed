@@ -1,5 +1,4 @@
 import express from "express";
-import path from "path";
 import multer from "multer";
 import mysql from "mysql";
 import { conn } from "../dbconnect";
@@ -31,7 +30,6 @@ const dbConfig = {
   password: "65011212216@csmsu",
   database: "web66_65011212216"
 };
-
 // Create a MySQL pool
 const pool = mysql.createPool(dbConfig);
 
@@ -51,53 +49,39 @@ const fileUpload = new FileMiddleware();
 router.post("/:uid", fileUpload.diskLoader.single("file"), async (req, res) => {
   const uid = req.params.uid;
 
-  // Check if the number of pictures for the given uid is greater than or equal to 5
-  conn.query("SELECT COUNT(pid) AS count FROM user_picture WHERE uid = ?", [uid], async (err, result) => {
-    if (err) {
-      console.error("Error retrieving count of pictures for uid:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
+  try {
+    const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
+    const storageRef = ref(storage, "/image/" + filename);
+    const metadata = {
+      contentType: req.file!.mimetype
+    };
+    const snapshot = await uploadBytesResumable(storageRef, req.file!.buffer, metadata);
+    const url = await getDownloadURL(snapshot.ref);
 
-    const count = result[0].count;
-    if (count >= 5) {
-      return res.status(400).json({ error: "The maximum number of pictures for this user has been reached" });
-    }
+    const sql1 = "INSERT INTO `picture` (`title`, `picture_url`, `point`) VALUES (?, ?, ?)";
+    const sql2 = "INSERT INTO `user_picture` (`uid`, `pid`) VALUES (?, ?)";
 
-    // If the number of pictures is less than 5, proceed with uploading the file to Firebase Storage
-    try {
-      const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
-      const storageRef = ref(storage, "/image/" + filename);
-      const metadata = {
-        contentType: req.file!.mimetype
-      };
-      const snapshot = await uploadBytesResumable(storageRef, req.file!.buffer, metadata);
-      const url = await getDownloadURL(snapshot.ref);
+    conn.query(sql1, [req.body.title || '', url, 0], async (err, result) => {
+      if (err) {
+        console.error("Error inserting data into 'picture' table:", err);
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
 
-      const sql1 = "INSERT INTO `picture` (`title`, `picture_url`, `point`) VALUES (?, ?, ?)";
-      const sql2 = "INSERT INTO `user_picture` (`uid`, `pid`) VALUES (?, ?)";
+      const pictureId = result.insertId;
 
-      conn.query(sql1, [req.body.title || '', url, 0], async (err, result) => {
+      conn.query(sql2, [uid, pictureId], (err, result) => {
         if (err) {
-          console.error("Error inserting data into 'picture' table:", err);
+          console.error("Error inserting data into 'user_picture' table:", err);
           return res.status(500).json({ error: "Internal Server Error" });
         }
 
-        const pictureId = result.insertId;
-
-        conn.query(sql2, [uid, pictureId], (err, result) => {
-          if (err) {
-            console.error("Error inserting data into 'user_picture' table:", err);
-            return res.status(500).json({ error: "Internal Server Error" });
-          }
-
-          return res.status(200).json({ file: url });
-        });
+        return res.status(200).json({ file: url });
       });
-    } catch (error) {
-      console.error("Error uploading file to storage:", error);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
+    });
+  } catch (error) {
+    console.error("Error uploading file to storage:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 // PUT endpoint for updating file
