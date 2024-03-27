@@ -12,7 +12,7 @@ router.get("/", (req, res)=>{
      //params ย่อมาจาก พารามิเตอร์
     
     // res.send('Methon GET in trip.ts : ' + id);
-    const sql = "select * from user ";
+    const sql = "SELECT * FROM user WHERE type != 'admin';";
 
     conn.query(sql,(err,result)=>{
         if(err){ //check error
