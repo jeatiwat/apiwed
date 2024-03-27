@@ -93,8 +93,8 @@ router.post("/", (req, res) => {
 
             const pid2 = results2[0].pid;
 
-            const sql1 = "SELECT picture.* FROM picture  WHERE picture.pid = ?;";
-            const sql2 = "SELECT picture.* FROM picture  WHERE picture.pid = ?;";
+            const sql1 = "SELECT picture.*,user.* FROM picture JOIN user_picture ON user_picture.pid = picture.pid JOIN user ON user.uid = user_picture.uid  WHERE picture.pid = ?;";
+            const sql2 = "SELECT picture.*,user.* FROM picture JOIN user_picture ON user_picture.pid = picture.pid JOIN user ON user.uid = user_picture.uid  WHERE picture.pid = ?;";
 
             conn.query(sql1, [pid1], (error, user1) => {
                 if (error) throw error;
