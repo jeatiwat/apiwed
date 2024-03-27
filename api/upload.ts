@@ -1,118 +1,18 @@
 import express from "express";
-import path from "path";
 import multer from "multer";
 import mysql from "mysql";
 import { conn } from "../dbconnect";
-
 import { initializeApp } from "firebase/app";
-import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable} from "firebase/storage"
-export const router = express.Router();
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL
+} from "@firebase/storage";
 
-// MySQL connection configuration
-const dbConfig = {
+const router = express.Router();
 
-  connectionLimit: 10,
-  host: "202.28.34.197",
-  user: "web66_65011212216",
-  password: "65011212216@csmsu",
-  database: "web66_65011212216"
-};
-
-// Create a MySQL pool
-
-
-// const pool = mysql.createPool(dbConfig);
-
-// class FileMiddleware {
-//   filename = "";
-//   public readonly diskLoader = multer({
-//     storage: multer.diskStorage({
-//       destination: (_req, _file, cb) => {
-//         cb(null, path.join(__dirname, "../uploads"));
-//       },
-//       filename: (req, file, cb) => {
-//         const uniqueSuffix =
-//           Date.now() + "-" + Math.round(Math.random() * 10000);
-//         this.filename = uniqueSuffix + "." + file.originalname.split(".").pop();
-//         cb(null, this.filename);
-//       },
-//     }),
-//     limits: {
-//       fileSize: 67108864, // 64 MByte
-//     },
-//   }).single("file");
-// }
-
-// const fileUpload = new FileMiddleware();
-// router.post("/:uid", fileUpload.diskLoader, (req, res) => {
-//   const pictureUrl = "/uploads/" + fileUpload.filename;
-//   const title = req.body.title || ''; // If req.body.title is not provided, set title to an empty string
-//   const uid = req.params.uid; // Get uid from route parameters
-
-//   // Check if the number of pids for the given uid is greater than or equal to 5
-//   pool.query("SELECT COUNT(pid) AS count FROM user_picture WHERE uid = ?", [uid], (err, result) => {
-//     if (err) {
-//       console.error("Error retrieving count of pids for uid:", err);
-//       res.status(500).json({ error: "Internal Server Error" });
-//       return;
-//     }
-
-//     const count = result[0].count;
-//     if (count >= 5) {
-//       // If the number of pids is greater than or equal to 5, send an error response
-//       res.status(400).json({ error: "The maximum number of pictures for this user has been reached" });
-//       return;
-//     }
-
-//     // If the number of pids is less than 5, proceed with uploading the file
-//     const currentTime = new Date();
-
-//     // Inserting data into MySQL
-//     const sql1 = "INSERT INTO `picture` (`title`, `picture_url`,`vid`) VALUES (?, ?,?)";
-//     const sql2 = "INSERT INTO `votes` (`vote`, `date`) VALUES (?, ?)";
-//     const sql5 = "INSERT INTO `user_picture` (`uid`, `pid`) VALUES (?, ?)";
-
-//     // Insert into votes table with default values
-//     pool.query(sql2, [0, currentTime], (err, result) => {
-//       if (err) {
-//         console.error("Error inserting data into 'votes' table:", err);
-//         res.status(500).json({ error: "Internal Server Error" });
-//         return;
-//       }
-
-//       // Retrieve vid from votes table
-//       const votesId = result.insertId;
-
-//       // Insert into picture table with vid from votes table
-//       pool.query(sql1, [title, pictureUrl, votesId], (err, result) => {
-//         if (err) {
-//           console.error("Error inserting data into 'picture' table:", err);
-//           res.status(500).json({ error: "Internal Server Error" });
-//           return;
-//         }
-
-//         // Retrieve pid from picture table
-//         const pictureId = result.insertId;
-
-//         // Insert into user_picture table with uid and pid
-//         pool.query(sql5, [uid, pictureId], (err, result) => {
-//           if (err) {
-//             console.error("Error inserting data into 'user_picture' table:", err);
-//             res.status(500).json({ error: "Internal Server Error" });
-//             return;
-//           }
-
-//           // If the upload was successful, send a success response
-//           res.json({ filename: pictureUrl });
-//         });
-//       });
-//     });
-//   });
-// });
-
-
-
-
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBP4PaKHkyegg7BE1qKm1yacs84lfkSkWo",
   authDomain: "tripbooking-m.firebaseapp.com",
@@ -122,118 +22,36 @@ const firebaseConfig = {
   appId: "1:146173309950:web:538b785a7cb424074206af",
   measurementId: "G-7FYR93MV7L"
 };
-initializeApp(firebaseConfig);
-const storage = getStorage();
 
 
-
+const firebaseApp = initializeApp(firebaseConfig);
+const storage = getStorage(firebaseApp);
 
 class FileMiddleware {
-  //attribute filename
-  filename = "";
-  //attribute diskLoader
-  // สร้าง obj 
   public readonly diskLoader = multer({
-      //storage = defile folder (disk)
     storage: multer.memoryStorage(),
-    // limit 64 MB
     limits: {
-      fileSize: 67108864, // 64 MByte
+      fileSize: 67108864 // 64 MByte
     },
+    fileFilter: (req, file, callback) => {
+      const allowedMimes = ["image/jpeg", "image/png"];
+      if (allowedMimes.includes(file.mimetype)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Invalid file type. Only JPEG and PNG are allowed."));
+      }
+    }
   });
 }
-// /upload
-const fileupload = new FileMiddleware();
-// router.post("/:uid", fileupload.diskLoader.single("file"), async (req, res) => {
-//   const pictureUrl = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
-//   const title = req.body.title || ''; // If req.body.title is not provided, set title to an empty string
-//   const uid = req.params.uid; // Get uid from route parameters
 
-//   // Check if the number of pids for the given uid is greater than or equal to 5
-//   conn.query("SELECT COUNT(pid) AS count FROM user_picture WHERE uid = ?", [uid], (err, result) => {
-//     if (err) {
-//       console.error("Error retrieving count of pids for uid:", err);
-//       res.status(500).json({ error: "Internal Server Error" });
-//       return;
-//     }
+const fileUpload = new FileMiddleware();
 
-//     const count = result[0].count;
-//     if (count >= 5) {
-//       // If the number of pids is greater than or equal to 5, send an error response
-//       res.status(400).json({ error: "The maximum number of pictures for this user has been reached" });
-//       return;
-//     }
-
-//     // If the number of pids is less than 5, proceed with uploading the file
-//     const currentTime = new Date();
-
-//     // gennarate file name
-//     const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
-//     // กำหนดชื่อ file
-//     const storageRef = ref(storage, "/image/" + filename);
-//     const metadata = {
-//       contentType: req.file!.mimetype
-//     }
-//     // upload
-//     uploadBytesResumable(storageRef, req.file!.buffer, metadata)
-//       .then(async (snapshot) => {
-//         const url = await getDownloadURL(snapshot.ref);
-
-//         // Inserting data into MySQL
-//         const sql1 = "INSERT INTO `picture` (`title`, `picture_url`,`point`) VALUES (?, ?,?)";
-//         const sql2 = "INSERT INTO `votes` (`vote`, `date`,`pid`) VALUES (?, ?, ?)";
-//         const sql5 = "INSERT INTO `user_picture` (`uid`, `pid`) VALUES (?, ?)";
-
-//         // Insert into votes table with default values
-//        conn.query(sql2, [0, currentTime], (err, result) => {
-//           if (err) {
-//             console.error("Error inserting data into 'votes' table:", err);
-//             res.status(500).json({ error: "Internal Server Error" });
-//             return;
-//           }
-
-//           // Retrieve vid from votes table
-//           const votesId = result.insertId;
-
-//           // Insert into picture table with vid from votes table
-//           conn.query(sql1, [title, url, votesId], (err, result) => {
-//             if (err) {
-//               console.error("Error inserting data into 'picture' table:", err);
-//               res.status(500).json({ error: "Internal Server Error" });
-//               return;
-//             }
-
-//             // Retrieve pid from picture table
-//             const pictureId = result.insertId;
-
-//             // Insert into user_picture table with uid and pid
-//             conn.query(sql5, [uid, pictureId], (err, result) => {
-//               if (err) {
-//                 console.error("Error inserting data into 'user_picture' table:", err);
-//                 res.status(500).json({ error: "Internal Server Error" });
-//                 return;
-//               }
-
-//               // If the upload was successful, send a success response
-//               res.status(200).json({ file: url });
-//             });
-//           });
-//         });
-//       })
-//       .catch((error) => {
-//         console.error("Error uploading file to storage:", error);
-//         res.status(500).json({ error: "Internal Server Error" });
-//       });
-//   });
-// });
-
-
-
-router.post("/:uid", fileupload.diskLoader.single("file"), async (req, res) => {
-  const uid = req.params.uid; // Get uid from route parameters
+// POST endpoint for uploading file
+router.post("/:uid", fileUpload.diskLoader.single("file"), async (req, res) => {
+  const uid = req.params.uid;
 
   // Check if the number of pids for the given uid is greater than or equal to 5
-  conn.query("SELECT COUNT(pid) AS count FROM user_picture WHERE uid = ?", [uid], (err, result) => {
+  conn.query("SELECT COUNT(pid) AS count FROM user_picture WHERE uid = ?", [uid], async (err, result) => {
     if (err) {
       console.error("Error retrieving count of pids for uid:", err);
       return res.status(500).json({ error: "Internal Server Error" });
@@ -241,105 +59,93 @@ router.post("/:uid", fileupload.diskLoader.single("file"), async (req, res) => {
 
     const count = result[0].count;
     if (count >= 5) {
-      // If the number of pids is greater than or equal to 5, send an error response
       return res.status(400).json({ error: "The maximum number of pictures for this user has been reached" });
     }
 
     // If the number of pids is less than 5, proceed with uploading the file
-    const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
-    const storageRef = ref(storage, "/image/" + filename);
-    const metadata = {
-      contentType: req.file!.mimetype
-    };
+    try {
+      const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
+      const storageRef = ref(storage, "/image/" + filename);
+      const metadata = {
+        contentType: req.file!.mimetype
+      };
+      const snapshot = await uploadBytesResumable(storageRef, req.file!.buffer, metadata);
+      const url = await getDownloadURL(snapshot.ref);
 
-    uploadBytesResumable(storageRef, req.file!.buffer, metadata)
-      .then(async (snapshot) => {
-        const url = await getDownloadURL(snapshot.ref);
+      const sql1 = "INSERT INTO `picture` (`title`, `picture_url`,`point`) VALUES (?, ?, ?)";
+      const sql2 = "INSERT INTO `user_picture` (`uid`, `pid`) VALUES (?, ?)";
 
-        // Inserting data into MySQL
-        const sql1 = "INSERT INTO `picture` (`title`, `picture_url`,`point`) VALUES (?, ?, ?)";
-        const sql2 = "INSERT INTO `user_picture` (`uid`, `pid`) VALUES (?, ?)";
+      conn.query(sql1, [req.body.title || '', url, 0], async (err, result) => {
+        if (err) {
+          console.error("Error inserting data into 'picture' table:", err);
+          return res.status(500).json({ error: "Internal Server Error" });
+        }
 
-        // Insert into picture table
-        conn.query(sql1, [req.body.title || '', url, 0], (err, result) => {
+        const pictureId = result.insertId;
+
+        conn.query(sql2, [uid, pictureId], (err, result) => {
           if (err) {
-            console.error("Error inserting data into 'picture' table:", err);
+            console.error("Error inserting data into 'user_picture' table:", err);
             return res.status(500).json({ error: "Internal Server Error" });
           }
 
-          // Retrieve pid from picture table
-          const pictureId = result.insertId;
-
-          // Insert into user_picture table with uid and pid
-          conn.query(sql2, [uid, pictureId], (err, result) => {
-            if (err) {
-              console.error("Error inserting data into 'user_picture' table:", err);
-              return res.status(500).json({ error: "Internal Server Error" });
-            }
-            return res.status(200).json({ file: url });
-          });
+          return res.status(200).json({ file: url });
         });
-      })
-      .catch((error) => {
-        console.error("Error uploading file to storage:", error);
-        return res.status(500).json({ error: "Internal Server Error" });
       });
+    } catch (error) {
+      console.error("Error uploading file to storage:", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
   });
 });
 
-
-router.put("/:pid", fileupload.diskLoader.single("file"), async (req, res) => {
+// PUT endpoint for updating file
+router.put("/:pid", fileUpload.diskLoader.single("file"), async (req, res) => {
   try {
-    const pid = req.params.pid; // Get pid from route parameters
+    const pid = req.params.pid;
 
-    // Check if req.file exists
     if (!req.file) {
       throw new Error("No file uploaded");
     }
 
-    // Generate file name
     const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
-    
-    // Set file name
     const storageRef = ref(storage, "/image/" + filename);
     const metadata = {
       contentType: req.file.mimetype
     };
 
-    // Upload
     const snapshot = await uploadBytesResumable(storageRef, req.file.buffer, metadata);
     const url = await getDownloadURL(snapshot.ref);
 
     const sql1 = "UPDATE `picture` SET `picture_url` = ? WHERE `pid` = ?";
-    
-    // Update picture table
+
     conn.query(sql1, [url, pid], (err, result) => {
       if (err) {
         console.error("Error updating data in 'picture' table:", err);
-        res.status(500).json({ error: "Internal Server Error" });
-        return;
+        return res.status(500).json({ error: "Internal Server Error" });
       }
 
-      res.status(200).json({ success: true, message: "File uploaded successfully" });
+      return res.status(200).json({ success: true, message: "File uploaded successfully" });
     });
   } catch (error) {
     console.error("Error uploading file to storage:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-
+// GET endpoint for fetching pictures by user id
 router.get("/:id", (req, res) => {
-  const id = req.params.id; //params ย่อมาจาก พารามิเตอร์
+  const id = req.params.id;
 
-  // res.send('Methon GET in trip.ts : ' + id);
   const sql = "SELECT user_picture.*, picture.picture_url FROM user_picture JOIN picture ON user_picture.pid = picture.pid WHERE user_picture.uid = ?";
 
   conn.query(sql, [id], (err, result) => {
-    if (err) { //check error
-      res.status(400).json(err);
+    if (err) {
+      return res.status(400).json(err);
     } else {
-      res.json(result);
+      return res.json(result);
     }
-  })
+  });
 });
+
+export { router };
