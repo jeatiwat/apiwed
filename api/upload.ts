@@ -109,17 +109,9 @@ router.post("/:uid", fileupload.diskLoader.single("file"), async (req, res) => {
               return;
             }
 
-            // Insert into votes table
-            // conn.query(sql3, [0, currentTime, pictureId], (err, result) => {
-            //   if (err) {
-            //     console.error("Error inserting data into 'votes' table:", err);
-            //     res.status(500).json({ error: "Internal Server Error" });
-            //     return;
-            //   }
-
-              // If the upload was successful, send a success response
+  
               res.status(200).json({ file: url });
-            // });
+      
           });
         });
       })
