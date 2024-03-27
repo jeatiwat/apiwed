@@ -1,18 +1,14 @@
 import express from "express";
+import path from "path";
 import multer from "multer";
 import mysql from "mysql";
 import { conn } from "../dbconnect";
 import { initializeApp } from "firebase/app";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL
-} from "@firebase/storage";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
-const router = express.Router();
+export const router = express.Router();
 
-// Firebase configuration
+// Initialize Firebase app and storage
 const firebaseConfig = {
   apiKey: "AIzaSyBP4PaKHkyegg7BE1qKm1yacs84lfkSkWo",
   authDomain: "tripbooking-m.firebaseapp.com",
@@ -23,37 +19,42 @@ const firebaseConfig = {
   measurementId: "G-7FYR93MV7L"
 };
 
+initializeApp(firebaseConfig);
+const storage = getStorage();
 
-const firebaseApp = initializeApp(firebaseConfig);
-const storage = getStorage(firebaseApp);
+// MySQL connection configuration
+const dbConfig = {
 
+  connectionLimit: 10,
+  host: "202.28.34.197",
+  user: "web66_65011212216",
+  password: "65011212216@csmsu",
+  database: "web66_65011212216"
+};
+
+// Create a MySQL pool
+const pool = mysql.createPool(dbConfig);
+
+// File middleware for handling file uploads
 class FileMiddleware {
   public readonly diskLoader = multer({
     storage: multer.memoryStorage(),
     limits: {
       fileSize: 67108864 // 64 MByte
-    },
-    fileFilter: (req, file, callback) => {
-      const allowedMimes = ["image/jpeg", "image/png"];
-      if (allowedMimes.includes(file.mimetype)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Invalid file type. Only JPEG and PNG are allowed."));
-      }
     }
   });
 }
 
 const fileUpload = new FileMiddleware();
 
-// POST endpoint for uploading file
+// POST endpoint for uploading files
 router.post("/:uid", fileUpload.diskLoader.single("file"), async (req, res) => {
   const uid = req.params.uid;
 
-  // Check if the number of pids for the given uid is greater than or equal to 5
+  // Check if the number of pictures for the given uid is greater than or equal to 5
   conn.query("SELECT COUNT(pid) AS count FROM user_picture WHERE uid = ?", [uid], async (err, result) => {
     if (err) {
-      console.error("Error retrieving count of pids for uid:", err);
+      console.error("Error retrieving count of pictures for uid:", err);
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
@@ -62,7 +63,7 @@ router.post("/:uid", fileUpload.diskLoader.single("file"), async (req, res) => {
       return res.status(400).json({ error: "The maximum number of pictures for this user has been reached" });
     }
 
-    // If the number of pids is less than 5, proceed with uploading the file
+    // If the number of pictures is less than 5, proceed with uploading the file to Firebase Storage
     try {
       const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
       const storageRef = ref(storage, "/image/" + filename);
@@ -72,7 +73,7 @@ router.post("/:uid", fileUpload.diskLoader.single("file"), async (req, res) => {
       const snapshot = await uploadBytesResumable(storageRef, req.file!.buffer, metadata);
       const url = await getDownloadURL(snapshot.ref);
 
-      const sql1 = "INSERT INTO `picture` (`title`, `picture_url`,`point`) VALUES (?, ?, ?)";
+      const sql1 = "INSERT INTO `picture` (`title`, `picture_url`, `point`) VALUES (?, ?, ?)";
       const sql2 = "INSERT INTO `user_picture` (`uid`, `pid`) VALUES (?, ?)";
 
       conn.query(sql1, [req.body.title || '', url, 0], async (err, result) => {
@@ -147,5 +148,3 @@ router.get("/:id", (req, res) => {
     }
   });
 });
-
-export { router };
