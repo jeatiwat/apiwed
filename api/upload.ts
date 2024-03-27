@@ -236,28 +236,22 @@ router.post("/:uid", fileupload.diskLoader.single("file"), async (req, res) => {
   conn.query("SELECT COUNT(pid) AS count FROM user_picture WHERE uid = ?", [uid], (err, result) => {
     if (err) {
       console.error("Error retrieving count of pids for uid:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-      return;
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
     const count = result[0].count;
     if (count >= 5) {
       // If the number of pids is greater than or equal to 5, send an error response
-      res.status(400).json({ error: "The maximum number of pictures for this user has been reached" });
-      return;
+      return res.status(400).json({ error: "The maximum number of pictures for this user has been reached" });
     }
 
     // If the number of pids is less than 5, proceed with uploading the file
-    const currentTime = new Date();
-    
-    // gennarate file name
-    const filename = "-" + Math.round(Math.random() * 10000) + ".png";
-    // กำหนดชื่อ file
+    const filename = Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
     const storageRef = ref(storage, "/image/" + filename);
     const metadata = {
       contentType: req.file!.mimetype
-    }
-    // upload
+    };
+
     uploadBytesResumable(storageRef, req.file!.buffer, metadata)
       .then(async (snapshot) => {
         const url = await getDownloadURL(snapshot.ref);
@@ -265,14 +259,12 @@ router.post("/:uid", fileupload.diskLoader.single("file"), async (req, res) => {
         // Inserting data into MySQL
         const sql1 = "INSERT INTO `picture` (`title`, `picture_url`,`point`) VALUES (?, ?, ?)";
         const sql2 = "INSERT INTO `user_picture` (`uid`, `pid`) VALUES (?, ?)";
-        // const sql3 = "INSERT INTO `votes` (`vote`,`date`,`pid`) VALUES (?, ?, ?)";
 
         // Insert into picture table
         conn.query(sql1, [req.body.title || '', url, 0], (err, result) => {
           if (err) {
             console.error("Error inserting data into 'picture' table:", err);
-            res.status(500).json({ error: "Internal Server Error" });
-            return;
+            return res.status(500).json({ error: "Internal Server Error" });
           }
 
           // Retrieve pid from picture table
@@ -282,30 +274,19 @@ router.post("/:uid", fileupload.diskLoader.single("file"), async (req, res) => {
           conn.query(sql2, [uid, pictureId], (err, result) => {
             if (err) {
               console.error("Error inserting data into 'user_picture' table:", err);
-              res.status(500).json({ error: "Internal Server Error" });
-              return;
+              return res.status(500).json({ error: "Internal Server Error" });
             }
-
-            // Insert into votes table
-            // conn.query(sql3, [0, currentTime, pictureId], (err, result) => {
-            //   if (err) {
-            //     console.error("Error inserting data into 'votes' table:", err);
-            //     res.status(500).json({ error: "Internal Server Error" });
-            //     return;
-            //   }
-
-              // If the upload was successful, send a success response
-              res.status(200).json({ file: url });
-            // });
+            return res.status(200).json({ file: url });
           });
         });
       })
       .catch((error) => {
         console.error("Error uploading file to storage:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+        return res.status(500).json({ error: "Internal Server Error" });
       });
   });
 });
+
 
 router.put("/:pid", fileupload.diskLoader.single("file"), async (req, res) => {
   try {
